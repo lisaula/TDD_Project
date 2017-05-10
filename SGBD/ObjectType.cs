@@ -20,6 +20,9 @@
         CHECK,
         STOREDPROCEDURE,
         FUNCTION,
-        VIEW
+        VIEW,
+        USER,
+        LOGIN_FOLDER,
+        LOGIN
     }
 }

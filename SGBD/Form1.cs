@@ -33,6 +33,16 @@ namespace SGBD
         {
             drop_dict = new Dictionary<ObjectType, Action>();
             drop_dict[ObjectType.TABLE] = dropTable;
+            drop_dict[ObjectType.INDEX] = dropIndex;
+            drop_dict[ObjectType.TRIGGER] = dropTrigger;
+            drop_dict[ObjectType.STOREDPROCEDURE] = dropStoreProcedure;
+            drop_dict[ObjectType.CHECK] = dropCheck;
+            drop_dict[ObjectType.FUNCTION] = dropFunction;
+            drop_dict[ObjectType.VIEW] = dropView;
+            drop_dict[ObjectType.USER] = dropUser;
+            drop_dict[ObjectType.LOGIN] = dropLogin;
+            drop_dict[ObjectType.DATABASE] = dropDatabase;
+            
         }
 
         private void initFunctDictionary()
@@ -46,7 +56,9 @@ namespace SGBD
             dict[ObjectType.DATABASE_FOLDER] = setDatabasesInTree;
             dict[ObjectType.FUNCTIONS_FOLDER] = setFunctionsInTree;
             dict[ObjectType.VIEWS_FOLDER] = setViewsInTree;
-            dict[ObjectType.USER_FOLDER] = setUsersInTree;
+            dict[ObjectType.LOGIN_FOLDER] = setUsersInTree;
+            dict[ObjectType.USER_FOLDER] = setUsersInDatabaseTree;
+            
         }
 
         public void load()
@@ -54,7 +66,7 @@ namespace SGBD
             if (server.user != null)
             {
                 Userlabel.Text = SERVER_CONNECTION + server.user;
-                var securityFolder = new MyTreeNode(ObjectType.SECURIY_FOLDER, "Security",new MyTreeNode[] { new MyTreeNode(ObjectType.USER_FOLDER, "Users")});
+                var securityFolder = new MyTreeNode(ObjectType.SECURIY_FOLDER, "Security",new MyTreeNode[] { new MyTreeNode(ObjectType.LOGIN_FOLDER, "Logins")});
                 MyTreeNode [] array = new MyTreeNode[] { new MyTreeNode(ObjectType.DATABASE_FOLDER, "Databases"),
                     securityFolder
                                                         };
@@ -64,24 +76,83 @@ namespace SGBD
                 treeNode.Expand();
             }
         }
-
+        //drops
         public void dropTable()
         {
             server.dropTable(current.name, current.parent.name);
-            Messagelabel.Text = "Drop succesfully.";
+            Messagelabel.Text = "Drop table succesfully.";
         }
-
+        public void dropView()
+        {
+            server.dropView(current.name, current.parent.name);
+            Messagelabel.Text = "Drop view succesfully.";
+        }
+        public void dropUser()
+        {
+            server.dropUser(current.name, current.parent.name);
+            Messagelabel.Text = "Drop user succesfully.";
+        }
+        public void dropLogin()
+        {
+            server.dropLogin(current.name);
+            Messagelabel.Text = "Drop login succesfully.";
+        }
+        
+        public void dropIndex()
+        {
+            server.dropIndex(current.name, current.parent.name, current.parent.parent.name);
+            Messagelabel.Text = "Drop index succesfully.";
+        }
+        public void dropTrigger()
+        {
+            server.dropTrigger(current.name, current.parent.parent.name);
+            Messagelabel.Text = "Drop trigger succesfully.";
+        }
+        public void dropStoreProcedure()
+        {
+            server.dropStoreProcedure(current.name, current.parent.name);
+            Messagelabel.Text = "Drop store procedure succesfully.";
+        }
+        public void dropCheck()
+        {
+            server.dropCheck(current.name, current.parent.name, current.parent.parent.name);
+            Messagelabel.Text = "Drop check succesfully.";
+        }
+        public void dropFunction()
+        {
+            server.dropFunction(current.name,current.parent.name);
+            Messagelabel.Text = "Drop function succesfully.";
+        }
+        public void dropDatabase()
+        {
+            server.dropDataBase(current.name);
+            Messagelabel.Text = "Drop Database succesfully.";
+        }
+        
         private void treeView_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             current = (MyTreeNode)treeView.SelectedNode;
             triggerActionOnNode();
         }
+
+        //listar
         private void setUsersInTree()
         {
             DataTable dt = server.getUsers();
             foreach (DataRow row in dt.Rows)
             {
-                MyTreeNode treeNode = new MyTreeNode(ObjectType.VIEW, row["name"].ToString());
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.LOGIN, row["name"].ToString());
+                current.Nodes.Add(treeNode);
+            }
+            current.Expand();
+        }
+        private void setUsersInDatabaseTree()
+        {
+            DataTable dt = server.getUsersDatabase(current.parent.name);
+            foreach (DataRow row in dt.Rows)
+            {
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.USER, row["UserName"].ToString());
+                treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
             current.Expand();
@@ -102,10 +173,10 @@ namespace SGBD
         }
         private void setViewsInTree()
         {
-            DataTable dt = server.getFunctions(current.parent.name);
+            DataTable dt = server.getViews(current.parent.name);
             foreach (DataRow row in dt.Rows)
             {
-                MyTreeNode treeNode = new MyTreeNode(ObjectType.VIEW, row["name"].ToString());
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.VIEW, row["Schema_Name"].ToString()+"."+row["name"].ToString());
                 treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
@@ -116,7 +187,7 @@ namespace SGBD
             DataTable dt = server.getFunctions(current.parent.name);
             foreach (DataRow row in dt.Rows)
             {
-                MyTreeNode treeNode = new MyTreeNode(ObjectType.FUNCTION, row["name"].ToString());
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.FUNCTION, row["Schema_Name"].ToString()+"."+row["name"].ToString());
                 treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
@@ -188,7 +259,7 @@ namespace SGBD
             DataTable dt = server.getStoredProcedures(current.parent.name);
             foreach (DataRow row in dt.Rows)
             {
-                MyTreeNode treeNode = new MyTreeNode(ObjectType.STOREDPROCEDURE, row["name"].ToString());
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.STOREDPROCEDURE, row["Schema_Name"].ToString() + "." +row["name"].ToString());
                 treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
@@ -223,12 +294,15 @@ namespace SGBD
             functions.setParent(parent);
             var views = new MyTreeNode(ObjectType.VIEWS_FOLDER, "Views");
             views.setParent(parent);
+            var users = new MyTreeNode(ObjectType.USER_FOLDER, "Users");
+            users.setParent(parent);
             MyTreeNode[] array = new MyTreeNode[]
             {
                 tables,
                 sp,
                 functions,
                 views,
+                users
             };
             return array;
         }
@@ -282,7 +356,7 @@ namespace SGBD
             }
             catch(Exception ex)
             {
-                MessageBox.Show(this, ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
         }

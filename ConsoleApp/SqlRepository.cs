@@ -139,6 +139,131 @@ Drop table " + table + @";";
             }
         }
 
+        public void dropIndex(string name, string table, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+ DROP INDEX "+ name +@" on " + table + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropTrigger(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+ DROP TRIGGER " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropStoreProcedure(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+DROP PROCEDURE " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropCheck(string name, string table, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+ALTER TABLE "+table +@"
+DROP CONSTRAINT "+name+@";
+        GO";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropFunction(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+DROP FUNCTION " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropView(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+DROP VIEW " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropUser(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText =@"use "+database+@"
+DROP USER " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropLogin(string name)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"
+        IF EXISTS(SELECT* FROM sys.server_principals WHERE name = N'"+name+ @"')
+DROP LOGIN " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+        public void dropDataBase(string name)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"
+EXEC msdb.dbo.sp_delete_database_backuphistory @database_name = N'" + name + @"'
+USE [master]
+ALTER DATABASE " + name + @" SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
+USE [master]
+DROP DATABASE " + name + @";";
+                command.ExecuteReader().Close();
+            }
+        }
+
         public void closeConnection()
         {
             if (conn != null && conn.State == ConnectionState.Open)
@@ -216,7 +341,10 @@ select* from sys.check_constraints where parent_object_id = OBJECT_ID('" + table
             using (SqlCommand command = conn.CreateCommand())
             {
                 command.CommandText = @"use " + database + @"
-select* from sys.procedures;";
+select p.*, s.name as Schema_Name 
+from sys.procedures as p inner join 
+sys.schemas as s 
+on s.schema_id = p.schema_id;";
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
                     var dt = new DataTable();
@@ -235,10 +363,12 @@ select* from sys.procedures;";
             using (SqlCommand command = conn.CreateCommand())
             {
                 command.CommandText = @"use " + database + @"
-SELECT name, o.object_id,definition, type_desc 
+SELECT o.name, o.object_id,m.definition, o.type_desc , s.name as Schema_Name
   FROM sys.sql_modules m 
 INNER JOIN sys.objects o 
         ON m.object_id=o.object_id
+inner join sys.schemas s
+		ON o.schema_id = s.schema_id
 WHERE type_desc like '%function%'";
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
@@ -258,10 +388,12 @@ WHERE type_desc like '%function%'";
             using (SqlCommand command = conn.CreateCommand())
             {
                 command.CommandText = @"use " + database + @"        
-SELECT name, o.object_id,definition, type_desc
-  FROM sys.sql_modules m
-INNER JOIN sys.objects o
+SELECT o.name, o.object_id,m.definition, o.type_desc , s.name as Schema_Name
+  FROM sys.sql_modules m 
+INNER JOIN sys.objects o 
         ON m.object_id=o.object_id
+inner join sys.schemas s
+		ON o.schema_id = s.schema_id
 WHERE type_desc like '%view%'
 ";
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -283,6 +415,35 @@ WHERE type_desc like '%view%'
             {
                 command.CommandText = @"
 SELECT* FROM sys.server_principals where type in ('s')";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable getUsersDatabase(string database)
+        {
+
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed while getting indexes");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use "+database+ @"
+declare @t table(UserName Sysname NULL, RoleName Sysname NULL, LoginName Sysname NULL, DefDBName Sysname NULL, DefSchemaName Sysname NULL, UserID smallint NULL, SID smallint NULL)
+insert @t(UserName, RoleName, LoginName , DefDBName, DefSchemaName, UserID, SID)
+EXEC sp_helpuser;
+select distinct t.UserName, sp.type 
+from @t as t 
+    inner join 
+        sys.server_principals sp
+            ON sp.name = t.UserName
+where type in ('s')
+";
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
                     var dt = new DataTable();
