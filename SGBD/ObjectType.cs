@@ -23,6 +23,8 @@
         VIEW,
         USER,
         LOGIN_FOLDER,
-        LOGIN
+        LOGIN,
+        FOREIGN_KEY_FOLDER,
+        FOREIGN_KEY
     }
 }

@@ -263,7 +263,51 @@ DROP DATABASE " + name + @";";
                 command.ExecuteReader().Close();
             }
         }
-
+        public DataTable getTriggerDDL(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use "+ database +@"
+exec sp_helptext " + name + @";";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+        public DataTable getCheckDDL(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+declare @values table(Text nvarchar(MAX))
+declare @table_id int, @definition varchar(max)
+select @table_id = parent_object_id, @definition = definition from sys.check_constraints where name = '" + name + @"'
+insert into @values values('use '+ '" + database + @"')
+insert into @values values('go')
+insert into @values values('alter table '+OBJECT_NAME(@table_id)+ ' with check add constraint " + name + @" check '+ @definition)
+insert into @values values('go')
+insert into @values values('alter table '+OBJECT_NAME(@table_id) + ' check constraint " + name + @"')
+insert into @values values('go')
+select* from @values;"; 
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
         public void closeConnection()
         {
             if (conn != null && conn.State == ConnectionState.Open)
@@ -292,6 +336,96 @@ select* from sys.indexes where object_id = OBJECT_ID('"+table+@"');";
                 }
             }
         }
+        public DataTable getForeignKeys(string table, string database)
+        {
+
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed while getting indexes");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+select * from sys.foreign_keys where parent_object_id = OBJECT_ID('" + table + @"');";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+        public DataTable getIndexDDL(string name, string database)
+        {
+
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed while getting indexes");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+declare @values table(Text nvarchar(MAX))
+declare @table_id int, @is_unique int, @cloustered varchar(30), @is_primary int, @index_id int,@counter int;
+select @table_id = object_id, @index_id = index_id, @is_unique = is_unique, @cloustered = type_desc, @is_primary = is_primary_key from sys.indexes where name like '%"+name + @"%';
+select @counter = COUNT(*) from sys.index_columns where object_id = @table_id and index_id = @index_id
+
+insert into @values values('use " + database + @"')
+insert into @values values('go')
+if (@is_primary = 1)
+	insert into @values values('alter table '+OBJECT_NAME(@table_id)+ ' add constraint " + name + @" primary key '+ @cloustered)
+else 
+	insert into @values values('create '+ @cloustered+' index " + name + @" on '+OBJECT_NAME(@table_id))
+insert into @values values('(')
+
+DECLARE @asc INT
+DECLARE @name NVARCHAR(100)
+DECLARE @cursor CURSOR
+
+SET @cursor = CURSOR FOR
+select ac.name, ic.is_descending_key from sys.index_columns as ic
+inner join sys.all_columns ac
+
+    on ac.object_id = ic.object_id and ac.column_id = ic.column_id
+where ac.object_id = @table_id and ic.index_id = @index_id
+order by ic.index_column_id
+
+OPEN @cursor
+FETCH NEXT
+FROM @cursor INTO @name, @asc
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    if(@counter< 2)
+		if(@asc = 0)
+
+            insert into @values values(@name + ' ASC')
+		else
+			insert into @values values(@name + ' DESC')
+    else
+		if(@asc = 0)
+			insert into @values values(@name + ' ASC,')
+		else
+			insert into @values values(@name + ' DESC,')
+
+    set @counter = @counter - 1;
+        FETCH NEXT
+
+    FROM @cursor INTO @name, @asc
+END
+CLOSE @cursor
+DEALLOCATE @cursor
+insert into @values values(')')
+insert into @values values('go')
+select* from @values";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
         public DataTable getTriggers(string table, string database)
         {
 

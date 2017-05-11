@@ -14,10 +14,13 @@ namespace SGBD
     public partial class Form1 : Form
     {
         public const string SERVER_CONNECTION = "(local)\\SQLServer - ";
+        public const int SQL_TAB_INDEX= 0;
+        public const int DESIGN_TAB_INDEX = 1;
+        public const int DDL_TAB_INDEX = 2;
         SqlRepository server;
         FormLogin formLogin=null;
         MyTreeNode current = null, nodePlaceHolder = null;
-        Dictionary<ObjectType, Action> dict, drop_dict;
+        Dictionary<ObjectType, Action> dict, drop_dict,ddl_dict;
         public Form1()
         {
             InitializeComponent();
@@ -27,6 +30,15 @@ namespace SGBD
             formLogin.Show();
             initFunctDictionary();
             initDropDictionary();
+            initDDLDictionary();
+        }
+
+        private void initDDLDictionary()
+        {
+            ddl_dict = new Dictionary<ObjectType, Action>();
+            ddl_dict[ObjectType.TRIGGER] = DDLTrigger;
+            ddl_dict[ObjectType.CHECK] = DDLCheck;
+            ddl_dict[ObjectType.INDEX] = DDLIndex;            
         }
 
         private void initDropDictionary()
@@ -58,7 +70,7 @@ namespace SGBD
             dict[ObjectType.VIEWS_FOLDER] = setViewsInTree;
             dict[ObjectType.LOGIN_FOLDER] = setUsersInTree;
             dict[ObjectType.USER_FOLDER] = setUsersInDatabaseTree;
-            
+            dict[ObjectType.FOREIGN_KEY_FOLDER] = setForeignKeysInTree;
         }
 
         public void load()
@@ -74,8 +86,45 @@ namespace SGBD
                 
                 treeView.Nodes.Add(treeNode);
                 treeNode.Expand();
+                SQLtextBox.ReadOnly = false;
             }
         }
+
+        //ddls
+        private void DDLTrigger()
+        {
+            DataTable dt = server.getTriggerDDL(current.name, current.parent.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        private void DDLCheck()
+        {
+            DataTable dt = server.getCheckDDL(current.name, current.parent.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        private void DDLIndex()
+        {
+            DataTable dt = server.getIndexDDL(current.name, current.parent.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        
         //drops
         public void dropTable()
         {
@@ -229,7 +278,18 @@ namespace SGBD
             }
             current.Expand();
         }
-
+        private void setForeignKeysInTree()
+        {
+            DataTable dt = server.getForeignKeys(current.parent.name, current.parent.parent.name);
+            foreach (DataRow row in dt.Rows)
+            {
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.FOREIGN_KEY, row["name"].ToString());
+                treeNode.setParent(current.parent);
+                current.Nodes.Add(treeNode);
+            }
+            current.Expand();
+        }
+        
         private void setTriggersInTree()
         {
             DataTable dt = server.getTriggers(current.parent.name, current.parent.parent.name);
@@ -274,11 +334,14 @@ namespace SGBD
             checks.setParent(parent);
             var indexes = new MyTreeNode(ObjectType.INDEXES_FOLDER, "Indexes");
             indexes.setParent(parent);
+            var f = new MyTreeNode(ObjectType.FOREIGN_KEY_FOLDER, "Foreign keys");
+            f.setParent(parent);
             MyTreeNode[] array = new MyTreeNode[]
                 {
                 indexes,
                 triggers,
                 checks,
+                f,
                 };
             return array;
         }
@@ -334,6 +397,17 @@ namespace SGBD
             formLogin = new FormLogin(ref server, load);
             formLogin.Owner = this;
             formLogin.Show();
+        }
+
+        private void DDLbutton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ddl_dict[current.type]();
+            }catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void Updatebutton_Click(object sender, EventArgs e)
