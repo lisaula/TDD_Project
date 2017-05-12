@@ -185,7 +185,108 @@ namespace SGBD
                 strings.Add(row["Text"].ToString());
             }
             DDLtextBox.Lines = strings.ToArray();
+            checkForIndexes(current);
+            checkForForeignKeys(current);
+            checkForChecks(current);
             tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+
+        private void checkForForeignKeys(MyTreeNode current)
+        {
+            MyTreeNode foreignKeys = current.Nodes[3] as MyTreeNode;
+            //listar 
+            DataTable dt = server.getForeignKeys(foreignKeys.parent.name, foreignKeys.parent.parent.name);
+            foreach (DataRow row in dt.Rows)
+            {
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.FOREIGN_KEY, row["name"].ToString());
+                treeNode.setParent(foreignKeys.parent);
+                foreignKeys.Nodes.Add(treeNode);
+            }
+            //ddl
+            List<string> strings = new List<string>();
+            foreach (Object o in foreignKeys.Nodes)
+            {
+                MyTreeNode child = o as MyTreeNode;
+                dt = server.getForeignKeyDDL(child.name, child.parent.name, child.parent.parent.name);
+                foreach (DataRow row in dt.Rows)
+                {
+                    strings.Add(row["Text"].ToString());
+                }
+                strings.Add("\n");
+            }
+            if (strings.Count > 0)
+            {
+                var z = new string[strings.Count + DDLtextBox.Lines.Length];
+                DDLtextBox.Lines.CopyTo(z, 0);
+                strings.ToArray().CopyTo(z, DDLtextBox.Lines.Length);
+                DDLtextBox.Lines = z;
+            }
+        }
+
+        private void checkForIndexes(MyTreeNode current)
+        {
+            MyTreeNode indexes = current.Nodes[0] as MyTreeNode;
+
+            //listar
+            DataTable dt = server.getIndexes(indexes.parent.name, indexes.parent.parent.name);
+            foreach (DataRow row in dt.Rows)
+            {
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.INDEX, row["name"].ToString());
+                treeNode.is_primary = Convert.ToInt32(row["is_primary_key"]);
+                treeNode.setParent(indexes.parent);
+                indexes.Nodes.Add(treeNode);
+            }
+            //ddl
+            List<string> strings = new List<string>();
+            foreach (Object o in indexes.Nodes)
+            {
+                MyTreeNode child = o as MyTreeNode;
+                dt = server.getIndexDDL(child.name, child.parent.parent.name);
+                foreach (DataRow row in dt.Rows)
+                {
+                    strings.Add(row["Text"].ToString());
+                }
+                strings.Add("\n");
+            }
+            if (strings.Count > 0)
+            {
+                var z = new string[strings.Count + DDLtextBox.Lines.Length];
+                DDLtextBox.Lines.CopyTo(z, 0);
+                strings.ToArray().CopyTo(z, DDLtextBox.Lines.Length);
+                DDLtextBox.Lines = z;
+            }
+        }
+
+        private void checkForChecks(MyTreeNode current)
+        {
+            MyTreeNode checks = current.Nodes[2] as MyTreeNode;
+            //listar
+            DataTable dt = server.getChecks(checks.parent.name, checks.parent.parent.name);
+            foreach (DataRow row in dt.Rows)
+            {
+                MyTreeNode treeNode = new MyTreeNode(ObjectType.CHECK, row["name"].ToString());
+                treeNode.setParent(checks.parent);
+                checks.Nodes.Add(treeNode);
+            }
+            //ddl
+            List<string> strings = new List<string>();
+            foreach (Object o in checks.Nodes)
+            {
+                MyTreeNode child = o as MyTreeNode;
+                dt = server.getCheckDDL(child.name, child.parent.parent.name);
+                foreach (DataRow row in dt.Rows)
+                {
+                    strings.Add(row["Text"].ToString());
+                }
+                strings.Add("\n");
+            }
+            if (strings.Count > 0)
+            {
+                var z = new string[strings.Count + DDLtextBox.Lines.Length];
+                DDLtextBox.Lines.CopyTo(z, 0);
+                strings.ToArray().CopyTo(z, DDLtextBox.Lines.Length);
+                DDLtextBox.Lines = z;
+            }
         }
 
 
