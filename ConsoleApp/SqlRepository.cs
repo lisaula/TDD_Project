@@ -914,7 +914,28 @@ SELECT* FROM sys.server_principals where type in ('s')";
                 }
             }
         }
-
+        public DataTable getTableDesign(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed while getting indexes");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use "+database+@"
+select ac.name as column_name, t.name as type_name, ac.max_length, ac.is_nullable, ac.is_identity
+from sys.all_columns ac inner join sys.types t
+    on t.user_type_id = ac.user_type_id
+where object_id = OBJECT_ID('"+name+@"')
+order by ac.column_id";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
         public DataTable getUsersDatabase(string database)
         {
 

@@ -49,6 +49,9 @@
             this.SQLTab = new System.Windows.Forms.TabPage();
             this.SQLtextBox = new System.Windows.Forms.TextBox();
             this.DesignTab = new System.Windows.Forms.TabPage();
+            this.tableLayoutPanel8 = new System.Windows.Forms.TableLayoutPanel();
+            this.DesigndataGridView = new System.Windows.Forms.DataGridView();
+            this.Designlabel = new System.Windows.Forms.Label();
             this.DDLTab = new System.Windows.Forms.TabPage();
             this.DDLtextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
@@ -63,6 +66,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.SQLTab.SuspendLayout();
+            this.DesignTab.SuspendLayout();
+            this.tableLayoutPanel8.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DesigndataGridView)).BeginInit();
             this.DDLTab.SuspendLayout();
             this.tableLayoutPanel5.SuspendLayout();
             this.tableLayoutPanel6.SuspendLayout();
@@ -325,6 +331,7 @@
             // 
             // DesignTab
             // 
+            this.DesignTab.Controls.Add(this.tableLayoutPanel8);
             this.DesignTab.Location = new System.Drawing.Point(4, 22);
             this.DesignTab.Name = "DesignTab";
             this.DesignTab.Padding = new System.Windows.Forms.Padding(3);
@@ -332,6 +339,41 @@
             this.DesignTab.TabIndex = 1;
             this.DesignTab.Text = "Design";
             this.DesignTab.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel8
+            // 
+            this.tableLayoutPanel8.ColumnCount = 1;
+            this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel8.Controls.Add(this.DesigndataGridView, 0, 1);
+            this.tableLayoutPanel8.Controls.Add(this.Designlabel, 0, 0);
+            this.tableLayoutPanel8.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel8.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanel8.Name = "tableLayoutPanel8";
+            this.tableLayoutPanel8.RowCount = 2;
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 93F));
+            this.tableLayoutPanel8.Size = new System.Drawing.Size(850, 430);
+            this.tableLayoutPanel8.TabIndex = 0;
+            // 
+            // DesigndataGridView
+            // 
+            this.DesigndataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DesigndataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DesigndataGridView.Location = new System.Drawing.Point(3, 33);
+            this.DesigndataGridView.Name = "DesigndataGridView";
+            this.DesigndataGridView.Size = new System.Drawing.Size(844, 394);
+            this.DesigndataGridView.TabIndex = 1;
+            // 
+            // Designlabel
+            // 
+            this.Designlabel.AutoSize = true;
+            this.Designlabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Designlabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Designlabel.Location = new System.Drawing.Point(3, 0);
+            this.Designlabel.Name = "Designlabel";
+            this.Designlabel.Size = new System.Drawing.Size(844, 30);
+            this.Designlabel.TabIndex = 0;
+            this.Designlabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // DDLTab
             // 
@@ -428,6 +470,10 @@
             this.tabControl1.ResumeLayout(false);
             this.SQLTab.ResumeLayout(false);
             this.SQLTab.PerformLayout();
+            this.DesignTab.ResumeLayout(false);
+            this.tableLayoutPanel8.ResumeLayout(false);
+            this.tableLayoutPanel8.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DesigndataGridView)).EndInit();
             this.DDLTab.ResumeLayout(false);
             this.DDLTab.PerformLayout();
             this.tableLayoutPanel5.ResumeLayout(false);
@@ -466,6 +512,9 @@
         private System.Windows.Forms.TextBox SQLtextBox;
         private System.Windows.Forms.TabPage DDLTab;
         private System.Windows.Forms.TextBox DDLtextBox;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel8;
+        private System.Windows.Forms.DataGridView DesigndataGridView;
+        private System.Windows.Forms.Label Designlabel;
     }
 }
 

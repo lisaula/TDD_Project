@@ -14,6 +14,7 @@ namespace SGBD
     public partial class Form1 : Form
     {
         public const string SERVER_CONNECTION = "(local)\\SQLServer - ";
+        public const string DESIGN_TEXT_LABEL = "Design of table ";
         public const int SQL_TAB_INDEX= 0;
         public const int DESIGN_TAB_INDEX = 1;
         public const int DDL_TAB_INDEX = 2;
@@ -556,10 +557,27 @@ namespace SGBD
 
         private void Selectbutton_Click(object sender, EventArgs e)
         {
-            if (current.type == ObjectType.TABLE) {
-                var dt = server.getTableData(current.name, current.parent.name);
-                dataGridView.DataSource = dt;
-                nodePlaceHolder = current;
+            try
+            {
+                if (current.type == ObjectType.TABLE)
+                {
+                    var dt = server.getTableData(current.name, current.parent.name);
+                    dataGridView.DataSource = dt;
+                    nodePlaceHolder = current;
+
+                    dt = server.getTableDesign(current.name, current.parent.name);
+                    DesigndataGridView.DataSource = dt;
+                    tabControl1.SelectedIndex = DESIGN_TAB_INDEX;
+                    Designlabel.Text = DESIGN_TEXT_LABEL + current.name;
+                }
+            }catch(Exception ex)
+            {
+                Messagelabel.Text = "ERROR WHILE SHOWING";
+                if (Messagelabel.ForeColor != System.Drawing.Color.Red)
+                {
+                    Messagelabel.ForeColor = System.Drawing.Color.Red;
+                }
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -614,6 +632,7 @@ namespace SGBD
             }
         }
 
+
         private void Updatebutton_Click(object sender, EventArgs e)
         {
             if (nodePlaceHolder != null)
@@ -660,7 +679,5 @@ namespace SGBD
             server.closeConnection();
             treeView.Nodes.Clear();
         }
-
-        
     }
 }
