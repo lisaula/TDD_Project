@@ -38,7 +38,14 @@ namespace SGBD
             ddl_dict = new Dictionary<ObjectType, Action>();
             ddl_dict[ObjectType.TRIGGER] = DDLTrigger;
             ddl_dict[ObjectType.CHECK] = DDLCheck;
-            ddl_dict[ObjectType.INDEX] = DDLIndex;            
+            ddl_dict[ObjectType.INDEX] = DDLIndex;
+            ddl_dict[ObjectType.FOREIGN_KEY] = DDLForeignKey;
+            ddl_dict[ObjectType.STOREDPROCEDURE] = DDLSP_FN_Views;
+            ddl_dict[ObjectType.FUNCTION] = DDLSP_FN_Views;
+            ddl_dict[ObjectType.VIEW] = DDLSP_FN_Views;
+            ddl_dict[ObjectType.USER] = DDLUser;
+            ddl_dict[ObjectType.LOGIN] = DDLLogin;
+            ddl_dict[ObjectType.TABLE] = DDLTable;
         }
 
         private void initDropDictionary()
@@ -102,6 +109,18 @@ namespace SGBD
             DDLtextBox.Lines = strings.ToArray();
             tabControl1.SelectedIndex = DDL_TAB_INDEX;
         }
+        private void DDLSP_FN_Views()
+        {
+            DataTable dt = server.getSP_FN_Views_DDL(current.name, current.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        
         private void DDLCheck()
         {
             DataTable dt = server.getCheckDDL(current.name, current.parent.parent.name);
@@ -124,7 +143,52 @@ namespace SGBD
             DDLtextBox.Lines = strings.ToArray();
             tabControl1.SelectedIndex = DDL_TAB_INDEX;
         }
-        
+        private void DDLForeignKey()
+        {
+            DataTable dt = server.getForeignKeyDDL(current.name, current.parent.name,current.parent.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        private void DDLUser()
+        {
+            DataTable dt = server.getUserDDL(current.name, current.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        private void DDLLogin()
+        {
+            DataTable dt = server.getLoginDDL(current.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+        private void DDLTable()
+        {
+            DataTable dt = server.getTableDDL(current.name, current.parent.name);
+            List<string> strings = new List<string>();
+            foreach (DataRow row in dt.Rows)
+            {
+                strings.Add(row["Text"].ToString());
+            }
+            DDLtextBox.Lines = strings.ToArray();
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
+
+
         //drops
         public void dropTable()
         {
@@ -149,7 +213,7 @@ namespace SGBD
         
         public void dropIndex()
         {
-            server.dropIndex(current.name, current.parent.name, current.parent.parent.name);
+            server.dropIndex(current.name, current.parent.name, current.parent.parent.name, current.is_primary);
             Messagelabel.Text = "Drop index succesfully.";
         }
         public void dropTrigger()
@@ -191,6 +255,7 @@ namespace SGBD
             foreach (DataRow row in dt.Rows)
             {
                 MyTreeNode treeNode = new MyTreeNode(ObjectType.LOGIN, row["name"].ToString());
+                treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
             current.Expand();
@@ -217,7 +282,7 @@ namespace SGBD
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this,ex.Message, ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this,ex.Message+"aqui", ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
         private void setViewsInTree()
@@ -273,6 +338,7 @@ namespace SGBD
             foreach (DataRow row in dt.Rows)
             {
                 MyTreeNode treeNode = new MyTreeNode(ObjectType.INDEX, row["name"].ToString());
+                treeNode.is_primary = Convert.ToInt32(row["is_primary_key"]);
                 treeNode.setParent(current.parent);
                 current.Nodes.Add(treeNode);
             }
@@ -401,12 +467,14 @@ namespace SGBD
 
         private void DDLbutton_Click(object sender, EventArgs e)
         {
+            if (current == null)
+                return;
             try
             {
                 ddl_dict[current.type]();
             }catch (Exception ex)
             {
-                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, ex.ToString() + "aqui2", ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -430,7 +498,7 @@ namespace SGBD
             }
             catch(Exception ex)
             {
-                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, ex.ToString() + "aqui3", ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
         }

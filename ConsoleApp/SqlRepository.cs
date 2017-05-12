@@ -139,7 +139,7 @@ Drop table " + table + @";";
             }
         }
 
-        public void dropIndex(string name, string table, string database)
+        public void dropIndex(string name, string table, string database, int is_primary)
         {
             if (conn == null || conn.State == ConnectionState.Closed)
             {
@@ -147,8 +147,16 @@ Drop table " + table + @";";
             }
             using (SqlCommand command = conn.CreateCommand())
             {
-                command.CommandText = @"use " + database + @"
- DROP INDEX "+ name +@" on " + table + @";";
+                if (is_primary == 0)
+                {
+                    command.CommandText = @"use " + database + @"
+ DROP INDEX " + name + @" on " + table + @";";
+                }
+                else
+                {
+                    command.CommandText = @"use " + database + @"
+ ALTER TABLE " + name +@" DROP CONSTRAINT " + name+ @";";
+                }
                 command.ExecuteReader().Close();
             }
         }
@@ -281,6 +289,24 @@ exec sp_helptext " + name + @";";
                 }
             }
         }
+        public DataTable getSP_FN_Views_DDL(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+exec sp_helptext '" + name + @"';";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        } 
         public DataTable getCheckDDL(string name, string database)
         {
             if (conn == null || conn.State == ConnectionState.Closed)
@@ -308,6 +334,258 @@ select* from @values;";
                 }
             }
         }
+
+        public DataTable getForeignKeyDDL(string name, string table,string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+declare @column sysname,@R_table sysname, @R_column sysname
+select
+    @column = ac.FK_Column,
+	@R_table = ac.PK_Table,
+	@R_column = ac.PK_Column
+from
+(SELECT
+    FK_Table = FK.TABLE_NAME,
+    FK_Column = CU.COLUMN_NAME,
+    PK_Table = PK.TABLE_NAME,
+    PK_Column = PT.COLUMN_NAME,
+    Constraint_Name = C.CONSTRAINT_NAME
+FROM
+    INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS C
+INNER JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS FK
+    ON C.CONSTRAINT_NAME = FK.CONSTRAINT_NAME
+INNER JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS PK
+    ON C.UNIQUE_CONSTRAINT_NAME = PK.CONSTRAINT_NAME
+INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE CU
+    ON C.CONSTRAINT_NAME = CU.CONSTRAINT_NAME
+INNER JOIN (
+            SELECT
+                i1.TABLE_NAME,
+                i2.COLUMN_NAME
+            FROM
+                INFORMATION_SCHEMA.TABLE_CONSTRAINTS i1
+            INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE i2
+                ON i1.CONSTRAINT_NAME = i2.CONSTRAINT_NAME
+            WHERE
+                i1.CONSTRAINT_TYPE = 'PRIMARY KEY'
+           ) PT
+    ON PT.TABLE_NAME = PK.TABLE_NAME) as ac
+    where ac.Constraint_Name = '"+name+ @"' and ac.FK_Table = '" + table + @"'
+
+
+declare @t table(Text varchar(MAX))
+insert into @t values('use " + database + @"')
+insert into @t values('go')
+insert into @t values('alter table " + table + @" with check add constraint " + name + @" foreign key('+@column+')')
+insert into @t values('references '+@R_table+' ('+@R_column+')')
+insert into @t values('go')
+insert into @t values('alter table " + table + @" check constraint " + name + @"')
+insert into @t values('go')
+select* from @t;";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+        public DataTable getUserDDL(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+declare @LoginName sysname;
+
+declare @t table(UserName Sysname NULL, RoleName Sysname NULL, LoginName Sysname NULL, DefDBName Sysname NULL, DefSchemaName Sysname NULL, UserID smallint NULL, SID smallint NULL)
+insert @t(UserName, RoleName, LoginName , DefDBName, DefSchemaName, UserID, SID)
+EXEC sp_helpuser;
+select distinct
+    @LoginName = t.LoginName
+from @t as t
+    inner join
+        sys.server_principals sp
+            ON sp.name = t.UserName
+where type in ('s') and UserName = '"+name+ @"'
+
+declare @tb table(Text varchar(MAX))
+insert into @tb values('use " + database + @"')
+insert into @tb values('go')
+insert into @tb values('create user " + name + @" for login '+@LoginName+' with default_schema = [dbo]')
+insert into @tb values('go')
+select* from @tb;";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+        public DataTable getLoginDDL(string name)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"
+declare @default_database sysname, @default_language sysname
+select @default_database = default_database_name, @default_language = default_language_name from sys.server_principals where name = '"+ name + @"'
+declare @t table(Text varchar(MAX))
+insert into @t values('create login ["+name+ @"] with password=N"""", default_database = ['+@default_database+'], default_language=['+@default_language+']')
+insert into @t values('go')
+
+DECLARE @name NVARCHAR(100)
+DECLARE @cursor CURSOR
+
+SET @cursor = CURSOR FOR
+select
+        spr.name as security_entity
+    from sys.server_principals sp
+    inner join sys.server_role_members srm
+    on sp.principal_id = srm.member_principal_id
+    inner join sys.server_principals spr
+    on srm.role_principal_id = spr.principal_id
+    where sp.type in ('s', 'u') and sp.name = '" + name + @"'
+
+OPEN @cursor
+FETCH NEXT
+FROM @cursor INTO @name
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    insert into @t values ('exec sys.sp_addsrvrolemember @loginame = N""" + name+ @""", @rolename = '+@name)
+    insert into @t values('go')
+
+    FETCH NEXT
+    FROM @cursor INTO @name
+END
+CLOSE @cursor
+DEALLOCATE @cursor
+
+insert into @t values('alter login [" + name + @"] disable')
+insert into @t values('go')
+select* from @t";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+        public DataTable getTableDDL(string name, string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use "+database+ @"
+declare @t table(Text varchar(MAX))
+
+insert into @t values('create table [" + name + @"](' )
+
+DECLARE @is_nullable INT, @max_length int, @is_identity int, @counter int
+DECLARE @name sysname, @Type_name sysname
+DECLARE @cursor CURSOR
+
+select @counter = count(*)
+from sys.all_columns ac inner join sys.types t
+    on t.user_type_id = ac.user_type_id
+where object_id = OBJECT_ID('" + name + @"')
+group by object_id
+
+SET @cursor = CURSOR FOR
+select ac.name, ac.max_length, ac.is_nullable, ac.is_identity, t.name as Type_name
+from sys.all_columns ac inner join sys.types t
+    on t.user_type_id = ac.user_type_id
+where object_id = OBJECT_ID('" + name + @"')
+order by ac.column_id
+
+OPEN @cursor
+FETCH NEXT
+FROM @cursor INTO @name, @max_length, @is_nullable, @is_identity, @Type_name
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    if(@counter< 2)
+		if(@is_nullable = 0)
+			if(@is_identity = 0)
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') not null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] not null')
+			else
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') identity(1,1) not null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] identity(1,1) not null')
+		else
+			if(@is_identity = 0)
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] null')
+			else
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') identity(1,1) null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] identity(1,1) null')
+    else
+		if(@is_nullable = 0)
+			if(@is_identity = 0)
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') not null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] not null')
+			else
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') identity(1,1) not null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] identity(1,1) not null')
+		else
+			if(@is_identity = 0)
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] null')
+			else
+				if(@Type_name like '%char%')
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] ('+CAST(@max_length AS varchar)+') identity(1,1) null')
+				else
+					insert into @t values('     ['+@name + '] ['+@Type_name+'] identity(1,1) null')
+
+    set @counter = @counter - 1;
+        FETCH NEXT
+
+    FROM @cursor INTO @name, @max_length, @is_nullable, @is_identity, @Type_name
+END
+CLOSE @cursor
+DEALLOCATE @cursor
+
+insert @t values(') on [PRIMARY]')
+select* from @t";
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(reader);
+                    return dt;
+                }
+            }
+        }
+
         public void closeConnection()
         {
             if (conn != null && conn.State == ConnectionState.Open)

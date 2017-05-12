@@ -11,6 +11,7 @@ namespace SGBD
     {
         public ObjectType type;
         public string name;
+        public int is_primary;
         private MyTreeNode[] array;
         public MyTreeNode parent;
 
