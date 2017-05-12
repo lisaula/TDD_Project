@@ -46,6 +46,7 @@ namespace SGBD
             ddl_dict[ObjectType.USER] = DDLUser;
             ddl_dict[ObjectType.LOGIN] = DDLLogin;
             ddl_dict[ObjectType.TABLE] = DDLTable;
+            ddl_dict[ObjectType.DATABASE] = DDLDataTable;
         }
 
         private void initDropDictionary()
@@ -61,7 +62,8 @@ namespace SGBD
             drop_dict[ObjectType.USER] = dropUser;
             drop_dict[ObjectType.LOGIN] = dropLogin;
             drop_dict[ObjectType.DATABASE] = dropDatabase;
-            
+            drop_dict[ObjectType.FOREIGN_KEY] = dropForeignKey;
+
         }
 
         private void initFunctDictionary()
@@ -120,7 +122,12 @@ namespace SGBD
             DDLtextBox.Lines = strings.ToArray();
             tabControl1.SelectedIndex = DDL_TAB_INDEX;
         }
-        
+        private void DDLDataTable()
+        {
+            string dt = server.getDatabaseDDL(current.name);
+            DDLtextBox.Text = dt;
+            tabControl1.SelectedIndex = DDL_TAB_INDEX;
+        }
         private void DDLCheck()
         {
             DataTable dt = server.getCheckDDL(current.name, current.parent.parent.name);
@@ -342,7 +349,11 @@ namespace SGBD
             server.dropDataBase(current.name);
             Messagelabel.Text = "Drop Database succesfully.";
         }
-        
+        public void dropForeignKey()
+        {
+            server.dropForeignKey(current.name,current.parent.name, current.parent.parent.name);
+            Messagelabel.Text = "Drop foreign key succesfully.";
+        }
         private void treeView_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             current = (MyTreeNode)treeView.SelectedNode;
@@ -575,7 +586,31 @@ namespace SGBD
                 ddl_dict[current.type]();
             }catch (Exception ex)
             {
-                MessageBox.Show(this, ex.ToString() + "aqui2", ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void Playbutton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string sql = SQLtextBox.Text;
+                DataTable dt = server.executeSQL(sql);
+                dataGridView.DataSource = dt;
+                Messagelabel.Text = "Query executed successfully";
+                if (Messagelabel.ForeColor != System.Drawing.Color.Black)
+                {
+                    Messagelabel.ForeColor = System.Drawing.Color.Black;
+                }
+            }
+            catch(Exception ex)
+            {
+                Messagelabel.Text = "SQL ERROR";
+                if (Messagelabel.ForeColor != System.Drawing.Color.Red)
+                {
+                    Messagelabel.ForeColor = System.Drawing.Color.Red;
+                }
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -583,8 +618,24 @@ namespace SGBD
         {
             if (nodePlaceHolder != null)
             {
-                server.updateTable(nodePlaceHolder.name, nodePlaceHolder.parent.name, (DataTable)(dataGridView.DataSource));
-                Messagelabel.Text = "Table updated";
+                try
+                {
+                    server.updateTable(nodePlaceHolder.name, nodePlaceHolder.parent.name, (DataTable)(dataGridView.DataSource));
+                    Messagelabel.Text = "Table updated";
+                    if (Messagelabel.ForeColor != System.Drawing.Color.Black)
+                    {
+                        Messagelabel.ForeColor = System.Drawing.Color.Black;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Messagelabel.Text = "ERROR WHILE UPDATING";
+                    if (Messagelabel.ForeColor != System.Drawing.Color.Red)
+                    {
+                        Messagelabel.ForeColor = System.Drawing.Color.Red;
+                    }
+                    MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

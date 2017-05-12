@@ -47,14 +47,14 @@
             this.dataGridView = new System.Windows.Forms.DataGridView();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.SQLTab = new System.Windows.Forms.TabPage();
+            this.SQLtextBox = new System.Windows.Forms.TextBox();
             this.DesignTab = new System.Windows.Forms.TabPage();
+            this.DDLTab = new System.Windows.Forms.TabPage();
+            this.DDLtextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.Messagelabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.Updatebutton = new System.Windows.Forms.Button();
-            this.SQLtextBox = new System.Windows.Forms.TextBox();
-            this.DDLTab = new System.Windows.Forms.TabPage();
-            this.DDLtextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -63,9 +63,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.SQLTab.SuspendLayout();
+            this.DDLTab.SuspendLayout();
             this.tableLayoutPanel5.SuspendLayout();
             this.tableLayoutPanel6.SuspendLayout();
-            this.DDLTab.SuspendLayout();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -259,6 +259,7 @@
             this.Playbutton.TabIndex = 0;
             this.Playbutton.Text = "Play";
             this.Playbutton.UseVisualStyleBackColor = true;
+            this.Playbutton.Click += new System.EventHandler(this.Playbutton_Click);
             // 
             // tableLayoutPanel4
             // 
@@ -310,6 +311,18 @@
             this.SQLTab.Text = "SQL";
             this.SQLTab.UseVisualStyleBackColor = true;
             // 
+            // SQLtextBox
+            // 
+            this.SQLtextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SQLtextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SQLtextBox.Location = new System.Drawing.Point(3, 3);
+            this.SQLtextBox.Multiline = true;
+            this.SQLtextBox.Name = "SQLtextBox";
+            this.SQLtextBox.ReadOnly = true;
+            this.SQLtextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.SQLtextBox.Size = new System.Drawing.Size(850, 430);
+            this.SQLtextBox.TabIndex = 0;
+            // 
             // DesignTab
             // 
             this.DesignTab.Location = new System.Drawing.Point(4, 22);
@@ -319,6 +332,30 @@
             this.DesignTab.TabIndex = 1;
             this.DesignTab.Text = "Design";
             this.DesignTab.UseVisualStyleBackColor = true;
+            // 
+            // DDLTab
+            // 
+            this.DDLTab.Controls.Add(this.DDLtextBox);
+            this.DDLTab.Location = new System.Drawing.Point(4, 22);
+            this.DDLTab.Name = "DDLTab";
+            this.DDLTab.Size = new System.Drawing.Size(856, 436);
+            this.DDLTab.TabIndex = 2;
+            this.DDLTab.Text = "DDL";
+            this.DDLTab.UseVisualStyleBackColor = true;
+            // 
+            // DDLtextBox
+            // 
+            this.DDLtextBox.BackColor = System.Drawing.SystemColors.GrayText;
+            this.DDLtextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DDLtextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.DDLtextBox.ForeColor = System.Drawing.SystemColors.Window;
+            this.DDLtextBox.Location = new System.Drawing.Point(0, 0);
+            this.DDLtextBox.Multiline = true;
+            this.DDLtextBox.Name = "DDLtextBox";
+            this.DDLtextBox.ReadOnly = true;
+            this.DDLtextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.DDLtextBox.Size = new System.Drawing.Size(856, 436);
+            this.DDLtextBox.TabIndex = 0;
             // 
             // tableLayoutPanel5
             // 
@@ -372,42 +409,6 @@
             this.Updatebutton.UseVisualStyleBackColor = true;
             this.Updatebutton.Click += new System.EventHandler(this.Updatebutton_Click);
             // 
-            // SQLtextBox
-            // 
-            this.SQLtextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.SQLtextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SQLtextBox.Location = new System.Drawing.Point(3, 3);
-            this.SQLtextBox.Multiline = true;
-            this.SQLtextBox.Name = "SQLtextBox";
-            this.SQLtextBox.ReadOnly = true;
-            this.SQLtextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.SQLtextBox.Size = new System.Drawing.Size(850, 430);
-            this.SQLtextBox.TabIndex = 0;
-            // 
-            // DDLTab
-            // 
-            this.DDLTab.Controls.Add(this.DDLtextBox);
-            this.DDLTab.Location = new System.Drawing.Point(4, 22);
-            this.DDLTab.Name = "DDLTab";
-            this.DDLTab.Size = new System.Drawing.Size(856, 436);
-            this.DDLTab.TabIndex = 2;
-            this.DDLTab.Text = "DDL";
-            this.DDLTab.UseVisualStyleBackColor = true;
-            // 
-            // DDLtextBox
-            // 
-            this.DDLtextBox.BackColor = System.Drawing.SystemColors.GrayText;
-            this.DDLtextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.DDLtextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.DDLtextBox.ForeColor = System.Drawing.SystemColors.Window;
-            this.DDLtextBox.Location = new System.Drawing.Point(0, 0);
-            this.DDLtextBox.Multiline = true;
-            this.DDLtextBox.Name = "DDLtextBox";
-            this.DDLtextBox.ReadOnly = true;
-            this.DDLtextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.DDLtextBox.Size = new System.Drawing.Size(856, 436);
-            this.DDLtextBox.TabIndex = 0;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -427,11 +428,11 @@
             this.tabControl1.ResumeLayout(false);
             this.SQLTab.ResumeLayout(false);
             this.SQLTab.PerformLayout();
+            this.DDLTab.ResumeLayout(false);
+            this.DDLTab.PerformLayout();
             this.tableLayoutPanel5.ResumeLayout(false);
             this.tableLayoutPanel5.PerformLayout();
             this.tableLayoutPanel6.ResumeLayout(false);
-            this.DDLTab.ResumeLayout(false);
-            this.DDLTab.PerformLayout();
             this.ResumeLayout(false);
 
         }

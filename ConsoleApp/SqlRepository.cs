@@ -125,6 +125,7 @@ select* from " + table + @";";
             }
         }
 
+        //drops
         public void dropTable(string table, string dataBase)
         {
             if (conn == null || conn.State == ConnectionState.Closed)
@@ -155,7 +156,7 @@ Drop table " + table + @";";
                 else
                 {
                     command.CommandText = @"use " + database + @"
- ALTER TABLE " + name +@" DROP CONSTRAINT " + name+ @";";
+ ALTER TABLE " + table + @" DROP CONSTRAINT " + name+ @";";
                 }
                 command.ExecuteReader().Close();
             }
@@ -271,6 +272,23 @@ DROP DATABASE " + name + @";";
                 command.ExecuteReader().Close();
             }
         }
+        public void dropForeignKey(string name, string table,string database)
+        {
+            if (conn == null || conn.State == ConnectionState.Closed)
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+            using (SqlCommand command = conn.CreateCommand())
+            {
+                command.CommandText = @"use " + database + @"
+IF EXISTS(SELECT* FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'["+name+ @"]') AND parent_object_id = OBJECT_ID(N'[" + table + @"]'))
+ALTER TABLE [" + table + @"]
+DROP CONSTRAINT[" + name + @"];";
+                command.ExecuteReader().Close();
+            }
+        }
+
+        //ddls
         public DataTable getTriggerDDL(string name, string database)
         {
             if (conn == null || conn.State == ConnectionState.Closed)
@@ -585,6 +603,67 @@ select* from @t";
                 }
             }
         }
+        public string getDatabaseDDL(string name)
+        { 
+            string s = @"CREATE DATABASE ["+name+ @"] ON  PRIMARY 
+( NAME = N'" + name + @"', FILENAME = N'C:\" + name + @".mdf' , SIZE = 2048KB , FILEGROWTH = 1024KB )
+ LOG ON 
+( NAME = N'nueva_log', FILENAME = N'C:\" + name + @"_log.ldf' , SIZE = 1024KB , FILEGROWTH = 10%)
+GO
+ALTER DATABASE [" + name + @"] SET COMPATIBILITY_LEVEL = 100
+GO
+ALTER DATABASE [" + name + @"] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [" + name + @"] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [" + name + @"] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [" + name + @"] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [" + name + @"] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [" + name + @"] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [" + name + @"] SET AUTO_CREATE_STATISTICS ON 
+GO
+ALTER DATABASE [" + name + @"] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [" + name + @"] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [" + name + @"] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [" + name + @"] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [" + name + @"] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [" + name + @"] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [" + name + @"] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [" + name + @"] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [" + name + @"] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [" + name + @"] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [" + name + @"] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [" + name + @"] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [" + name + @"] SET  READ_WRITE 
+GO
+ALTER DATABASE [" + name + @"] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [" + name + @"] SET  MULTI_USER 
+GO
+ALTER DATABASE [" + name + @"] SET PAGE_VERIFY CHECKSUM  
+GO
+USE [" + name + @"]
+GO
+IF NOT EXISTS (SELECT name FROM sys.filegroups WHERE is_default=1 AND name = N'PRIMARY') ALTER DATABASE [" + name + @"] MODIFY FILEGROUP [PRIMARY] DEFAULT
+GO";
+            return s;
+        }
 
         public void closeConnection()
         {
@@ -594,7 +673,7 @@ select* from @t";
                 this.user = null;
             }
         }
-
+        //listar
         public DataTable getIndexes(string table, string database)
         {
             
@@ -900,5 +979,27 @@ where type in ('s')
             }
         }
 
+
+        //execute
+        public DataTable executeSQL(string sql)
+        {
+            if (conn != null && conn.State == ConnectionState.Open)
+            {
+                using (SqlCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = sql;
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        return dt;
+                    }
+                }
+            }
+            else
+            {
+                throw new ConnectionCloseException("The connection is closed");
+            }
+        }
     }
 }
