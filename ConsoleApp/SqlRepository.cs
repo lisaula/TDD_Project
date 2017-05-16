@@ -1022,5 +1022,174 @@ where type in ('s')
                 throw new ConnectionCloseException("The connection is closed");
             }
         }
+
+        //create
+
+        public string createTableProto(string database)
+        {
+            return @"--Simple CREATE TABLE Syntax (common if not using options)
+USE "+ database +@"
+
+CREATE TABLE   
+    [ database_name . [ schema_name ] . | schema_name . ] table_name   
+    ( { <column_definition> } [ ,...n ] )   
+[ ; ]  ";
+        }
+        public string createDataBase()
+        {
+            return @"CREATE DATABASE databasename;";
+        }
+        public string createTrigger()
+        {
+            return @"
+
+CREATE TRIGGER <Schema_Name, sysname, Schema_Name>.<Trigger_Name, sysname, Trigger_Name> 
+   ON  <Schema_Name, sysname, Schema_Name>.<Table_Name, sysname, Table_Name> 
+   AFTER <Data_Modification_Statements, , INSERT,DELETE,UPDATE>
+AS 
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for trigger here
+
+END";
+        }
+
+        public string createView(string database)
+        {
+            return @"
+USE "+ database + @"
+
+CREATE [ OR ALTER ] VIEW [ schema_name . ] view_name [ (column [ ,...n ] ) ]   
+[ WITH <view_attribute> [ ,...n ] ]   
+AS select_statement   
+[ WITH CHECK OPTION ]   
+[ ; ]  
+  
+<view_attribute> ::=   
+{  
+    [ ENCRYPTION ]  
+    [ SCHEMABINDING ]  
+    [ VIEW_METADATA ]       
+}   ";
+        }
+
+        public string createIndex()
+        {
+            return @"
+
+CREATE [ CLUSTERED | NONCLUSTERED ] INDEX index_name   
+    ON [ database_name . [ schema ] . | schema . ] table_name   
+        ( { column [ ASC | DESC ] } [ ,...n ] )  
+    WITH ( DROP_EXISTING = { ON | OFF } )  
+[;]  ";
+        }
+
+        public string createUser(string database)
+        {
+            return @"
+USE "+ database + @"
+
+CREATE USER <username> FOR LOGIN <loginname>
+
+USE " + database + @"
+
+ALTER USER <username> WITH DEFAULT_SCHEMA=[dbo]
+
+USE " + database + @"
+
+EXEC sp_addrolemember N'<privilege>', N'<username>'
+
+--privileges options
+--db_owner
+--db_datareader
+--db_datawriter
+--db_denydatareader
+--db_denydatawriter
+--db_ddladmin
+--db_accessadmin
+";
+        }
+        public string createLogin()
+        {
+            return @"
+USE [master]
+
+CREATE LOGIN <loginname> WITH PASSWORD=N'<password>', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+
+EXEC master..sp_addsrvrolemember @loginame = N'<loginname>', @rolename = N'<rolename>'
+
+--roles option 
+--public
+--sysadmin
+--securityadmin
+--serveradmin";
+        }
+
+        public string createStoreProcedure(string database)
+        {
+            return @"
+USE "+database+@"
+
+CREATE PROCEDURE <Procedure_Name, sysname, ProcedureName> 
+	-- Add the parameters for the stored procedure here
+	<@Param1, sysname, @p1> <Datatype_For_Param1, , int> = <Default_Value_For_Param1, , 0>, 
+	<@Param2, sysname, @p2> <Datatype_For_Param2, , int> = <Default_Value_For_Param2, , 0>
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	SELECT <@Param1, sysname, @p1>, <@Param2, sysname, @p2>
+END
+GO";
+        }
+
+        public string createFunction(string database)
+        {
+            return @"
+USE "+database+@"
+
+CREATE FUNCTION <Scalar_Function_Name, sysname, FunctionName> 
+(
+	-- Add the parameters for the function here
+	<@Param1, sysname, @p1> <Data_Type_For_Param1, , int>
+)
+RETURNS <Function_Data_Type, ,int>
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE <@ResultVar, sysname, @Result> <Function_Data_Type, ,int>
+
+	-- Add the T-SQL statements to compute the return value here
+	SELECT <@ResultVar, sysname, @Result> = <@Param1, sysname, @p1>
+
+	-- Return the result of the function
+	RETURN <@ResultVar, sysname, @Result>
+
+END";
+        }
+
+        public string createForeignKey(string table, string database)
+        {
+            return @"
+USE "+database +@"
+
+ALTER TABLE "+table+ @"
+ADD FOREIGN KEY (<columnname>) REFERENCES Persons(<R_columnname>);";
+        }
+
+        public string createCheck(string table, string database)
+        {
+            return @"
+USE "+database+@"
+
+ALTER TABLE "+table+@"
+ADD CONSTRAINT <checkname> CHECK (<expression>);";
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace SGBD
         SqlRepository server;
         FormLogin formLogin=null;
         MyTreeNode current = null, nodePlaceHolder = null;
-        Dictionary<ObjectType, Action> dict, drop_dict,ddl_dict;
+        Dictionary<ObjectType, Action> dict, drop_dict,ddl_dict, create_dict;
         public Form1()
         {
             InitializeComponent();
@@ -32,8 +32,24 @@ namespace SGBD
             initFunctDictionary();
             initDropDictionary();
             initDDLDictionary();
+            initCreateDictionary();
         }
 
+        private void initCreateDictionary()
+        {
+            create_dict = new Dictionary<ObjectType, Action>();
+            create_dict[ObjectType.TABLES_FOLDER] = createTable;
+            create_dict[ObjectType.DATABASE_FOLDER] = createDatabase;
+            create_dict[ObjectType.TRIGGERS_FOLDER] = createTrigger;
+            create_dict[ObjectType.VIEWS_FOLDER] = createView;
+            create_dict[ObjectType.INDEXES_FOLDER] = createIndex;
+            create_dict[ObjectType.USER_FOLDER] = createUser;
+            create_dict[ObjectType.LOGIN_FOLDER] = createLogin;
+            create_dict[ObjectType.STOREDPROCEDURES_FOLDER] = createStoreProcedure;
+            create_dict[ObjectType.FUNCTIONS_FOLDER] = createFunction;
+            create_dict[ObjectType.FOREIGN_KEY_FOLDER] = createForeignKey;
+            create_dict[ObjectType.CHECKS_FOLDER] = createCheck;
+        }
         private void initDDLDictionary()
         {
             ddl_dict = new Dictionary<ObjectType, Action>();
@@ -631,6 +647,73 @@ namespace SGBD
                 MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void Createbutton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                create_dict[current.type]();
+            }catch(Exception ex)
+            {
+                MessageBox.Show(this, ex.ToString(), ex.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private void createTable()
+        {
+            string s = server.createTableProto(current.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createDatabase()
+        {
+            string s = server.createDataBase();
+            SQLtextBox.Text = s;
+        }
+        private void createTrigger()
+        {
+            string s = server.createTrigger();
+            SQLtextBox.Text = s;
+        }
+        private void createView()
+        {
+            string s = server.createView(current.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createIndex()
+        {
+            string s = server.createIndex();
+            SQLtextBox.Text = s;
+        }
+        private void createUser()
+        {
+            string s = server.createUser(current.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createLogin()
+        {
+            string s = server.createLogin();
+            SQLtextBox.Text = s;
+        }
+        private void createStoreProcedure()
+        {
+            string s = server.createStoreProcedure(current.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createFunction()
+        {
+            string s = server.createFunction(current.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createForeignKey()
+        {
+            string s = server.createForeignKey(current.parent.name, current.parent.parent.name);
+            SQLtextBox.Text = s;
+        }
+        private void createCheck()
+        {
+            string s = server.createCheck(current.parent.name, current.parent.parent.name);
+            SQLtextBox.Text = s;
+        }
+        
 
 
         private void Updatebutton_Click(object sender, EventArgs e)

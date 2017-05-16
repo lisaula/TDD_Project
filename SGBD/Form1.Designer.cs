@@ -219,6 +219,7 @@
             this.Createbutton.TabIndex = 2;
             this.Createbutton.Text = "Create";
             this.Createbutton.UseVisualStyleBackColor = true;
+            this.Createbutton.Click += new System.EventHandler(this.Createbutton_Click);
             // 
             // Alterbutton
             // 
